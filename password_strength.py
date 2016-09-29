@@ -1,4 +1,5 @@
 import re
+import argparse
 from datetime import datetime
 
 
@@ -11,6 +12,8 @@ WEIGHT_LOWERCASE = 1
 WEIGHT_AS_DATE = -2
 WEIGHT_BLACKLIST = -2
 BLACKLIST = {'qwerty', 'password', 'password1', '123', 'google'}
+MIN_STRENGTH = 1
+MAX_STRENGTH = 10
 
 
 def get_password_strength(password):
@@ -18,16 +21,16 @@ def get_password_strength(password):
     # получим вес длинны пароля
     password_strength += MAX_WEIGHT_LEN * (len(password) / MAX_LENGTH_PASS)
     # проверим наличие строчных симоволов
-    if bool(re.match('^.*[a-z]+.*$', password)):
+    if bool(re.search('[a-z]', password)):
         password_strength += WEIGHT_LOWERCASE
     # проверим наличие прописных символов
-    if bool(re.match('^.*[A-Z]+.*$', password)):
+    if bool(re.search('[A-Z]', password)):
         password_strength += WEIGHT_CAPITAL
     # проверим наличие цифр
-    if bool(re.match('^.*\d+.*$', password)):
+    if bool(re.search('\d', password)):
         password_strength += WEIGHT_NUM
     # проверим наличие специальных символов
-    if bool(re.match('^.*[\W_]+.*$', password)):
+    if bool(re.search('[\W_]', password)):
         password_strength += WEIGHT_SUMBOL
     # проверим на вхождение пароля в черный список
     if password in BLACKLIST:
@@ -44,24 +47,42 @@ def get_password_strength(password):
         try:
             if datetime.strptime(password, date_format):
                 pass_as_date += True
-        except:
+        except Exception:
             pass
     if pass_as_date:
         password_strength += WEIGHT_AS_DATE
 
-    if password_strength < 1:
-        password_strength = 1
-    elif password_strength > 10:
-        password_strength = 10
-    return 'password strength: %s' % password_strength
+    if password_strength < MIN_STRENGTH:
+        password_strength = MIN_STRENGTH
+    elif password_strength > MAX_STRENGTH:
+        password_strength = MAX_STRENGTH
+    return password_strength
+
+
+def validation_password(password):
+    if 0 < len(password) <= MAX_LENGTH_PASS:
+        return True
+    else:
+        return False
+
+
+def createParser():
+    parser = argparse.ArgumentParser(description='Script to assess \
+                                     password strength.')
+    parser.add_argument('-p', '--password', metavar='PASSWORD',
+                        help='Password to assess strength.')
+    return parser
 
 
 if __name__ == '__main__':
-    while True:
+    parser = createParser()
+    namespace = parser.parse_args()
+    if namespace.password:
+        password = namespace.password
+    else:
         password = input('Enter password (max length %s): ' % MAX_LENGTH_PASS)
-        if 0 < len(password) <= MAX_LENGTH_PASS:
-            break
-        else:
-            print('Password length must be between %s and %s characters!'
-                  % (1, MAX_LENGTH_PASS))
-    print(get_password_strength(password))
+    if validation_password(password):
+        print('password strength: %s' % get_password_strength(password))
+    else:
+        print('Password length must be between %s and %s characters!'
+              % (1, MAX_LENGTH_PASS))
