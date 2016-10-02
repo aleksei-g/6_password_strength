@@ -42,12 +42,12 @@ def get_password_strength(password):
                     '%m-%d', '%m.%d', '%m/%d', '%m%d',
                     '%d-%m-%Y', '%d.%m.%Y', '%d/%m/%Y', '%d%m%Y',
                     '%m-%Y', '%m.%Y', '%m/%Y', '%m%Y',
-                    '%d-%m', '%d.%m', '%d/%m''%d%m']
+                    '%d-%m', '%d.%m', '%d/%m', '%d%m']
     for date_format in date_formats:
         try:
             if datetime.strptime(password, date_format):
                 pass_as_date += True
-        except Exception:
+        except ValueError:
             pass
     if pass_as_date:
         password_strength += WEIGHT_AS_DATE
@@ -59,14 +59,14 @@ def get_password_strength(password):
     return password_strength
 
 
-def validation_password(password):
+def check_len_password(password):
     if 0 < len(password) <= MAX_LENGTH_PASS:
         return True
     else:
         return False
 
 
-def createParser():
+def create_parser():
     parser = argparse.ArgumentParser(description='Script to assess \
                                      password strength.')
     parser.add_argument('-p', '--password', metavar='PASSWORD',
@@ -75,13 +75,13 @@ def createParser():
 
 
 if __name__ == '__main__':
-    parser = createParser()
+    parser = create_parser()
     namespace = parser.parse_args()
     if namespace.password:
         password = namespace.password
     else:
         password = input('Enter password (max length %s): ' % MAX_LENGTH_PASS)
-    if validation_password(password):
+    if check_len_password(password):
         print('password strength: %s' % get_password_strength(password))
     else:
         print('Password length must be between %s and %s characters!'
